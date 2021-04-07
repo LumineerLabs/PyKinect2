@@ -2,19 +2,19 @@ from pykinect2 import PyKinectV2
 from pykinect2.PyKinectV2 import *
 
 import ctypes
-import _ctypes 
+import _ctypes
 from _ctypes import COMError
 import comtypes
 import sys
 import numpy
 import time
 
-import importlib 
+import importlib
 
-if sys.hexversion >= 0x03000000: 
+if sys.hexversion >= 0x03000000:
     import _thread as thread
 else:
-    import thread 
+    import thread
 
 KINECT_MAX_BODY_COUNT = 6
 
@@ -33,7 +33,7 @@ class PyKinectRuntime(object):
         self._PyObject_AsWriteBuffer.argtypes = [ctypes.py_object,
                                           ctypes.POINTER(ctypes.c_void_p),
                                           ctypes.POINTER(self.Py_ssize_t)]
-        
+
         #self._color_frame_ready = PyKinectV2._event()
         #self._depth_frame_ready = PyKinectV2._event()
         #self._body_frame_ready = PyKinectV2._event()
@@ -48,7 +48,7 @@ class PyKinectRuntime(object):
         self._depth_frame_arrived_event = 0
         self._body_frame_arrived_event = 0
         self._body_index_frame_arrived_event = 0
-        self._infrared_frame_arrived_event = 0  
+        self._infrared_frame_arrived_event = 0
         self._long_exposure_infrared_frame_arrived_event = 0
         self._audio_frame_arrived_event = 0
 
@@ -62,8 +62,8 @@ class PyKinectRuntime(object):
 
         #initialize sensor
         self._sensor = ctypes.POINTER(PyKinectV2.IKinectSensor)()
-        hres = ctypes.windll.kinect20.GetDefaultKinectSensor(ctypes.byref(self._sensor)) 
-        hres = self._sensor.Open() 
+        hres = ctypes.windll.kinect20.GetDefaultKinectSensor(ctypes.byref(self._sensor))
+        hres = self._sensor.Open()
 
         self._mapper = self._sensor.CoordinateMapper
 
@@ -82,20 +82,20 @@ class PyKinectRuntime(object):
 
         self._waitHandleCount = 1
 
-        self._color_source = self._sensor.ColorFrameSource 
+        self._color_source = self._sensor.ColorFrameSource
         self.color_frame_desc = self._color_source.FrameDescription
         self._infrared_source = self._sensor.InfraredFrameSource
-        self.infrared_frame_desc = self._infrared_source.FrameDescription 
-        self._depth_source = self._sensor.DepthFrameSource 
-        self.depth_frame_desc = self._depth_source.FrameDescription 
-        self._body_index_source = self._sensor.BodyIndexFrameSource 
-        self.body_index_frame_desc = self._body_index_source.FrameDescription 
-        self._body_source = self._sensor.BodyFrameSource 
+        self.infrared_frame_desc = self._infrared_source.FrameDescription
+        self._depth_source = self._sensor.DepthFrameSource
+        self.depth_frame_desc = self._depth_source.FrameDescription
+        self._body_index_source = self._sensor.BodyIndexFrameSource
+        self.body_index_frame_desc = self._body_index_source.FrameDescription
+        self._body_source = self._sensor.BodyFrameSource
         self._body_frame_data = ctypes.POINTER(ctypes.POINTER(IBody))
         self.max_body_count = self._body_source.BodyCount
 
-        self._color_frame_data = None 
-        self._depth_frame_data = None 
+        self._color_frame_data = None
+        self._depth_frame_data = None
         self._body_frame_data = None
         self._body_index_frame_data = None
         self._infrared_frame_data = None
@@ -103,7 +103,7 @@ class PyKinectRuntime(object):
         self._audio_frame_data = None
 
         if(self.frame_source_types & FrameSourceTypes_Color):
-            self._color_frame_data = ctypes.POINTER(ctypes.c_ubyte) 
+            self._color_frame_data = ctypes.POINTER(ctypes.c_ubyte)
             self._color_frame_data_capacity = ctypes.c_uint(self.color_frame_desc.Width * self.color_frame_desc.Height * 4)
             self._color_frame_data_type = ctypes.c_ubyte * self._color_frame_data_capacity.value
             self._color_frame_data = ctypes.cast(self._color_frame_data_type(), ctypes.POINTER(ctypes.c_ubyte))
@@ -113,7 +113,7 @@ class PyKinectRuntime(object):
             self._waitHandleCount += 1
 
         if(self.frame_source_types & FrameSourceTypes_Infrared):
-            self._infrared_frame_data = ctypes.POINTER(ctypes.c_ushort) 
+            self._infrared_frame_data = ctypes.POINTER(ctypes.c_ushort)
             self._infrared_frame_data_capacity = ctypes.c_uint(self.infrared_frame_desc.Width * self.infrared_frame_desc.Height)
             self._infrared_frame_data_type = ctypes.c_ushort * self._infrared_frame_data_capacity.value
             self._infrared_frame_data = ctypes.cast(self._infrared_frame_data_type(), ctypes.POINTER(ctypes.c_ushort))
@@ -121,9 +121,9 @@ class PyKinectRuntime(object):
             self._infrared_frame_arrived_event = self._infrared_frame_reader.SubscribeFrameArrived()
             self._handles[self._waitHandleCount] = self._infrared_frame_arrived_event
             self._waitHandleCount += 1
-            
+
         if(self.frame_source_types & FrameSourceTypes_Depth):
-            self._depth_frame_data = ctypes.POINTER(ctypes.c_ushort) 
+            self._depth_frame_data = ctypes.POINTER(ctypes.c_ushort)
             self._depth_frame_data_capacity = ctypes.c_uint(self.depth_frame_desc.Width * self.depth_frame_desc.Height)
             self._depth_frame_data_type = ctypes.c_ushort * self._depth_frame_data_capacity.value
             self._depth_frame_data = ctypes.cast(self._depth_frame_data_type(), ctypes.POINTER(ctypes.c_ushort))
@@ -133,7 +133,7 @@ class PyKinectRuntime(object):
             self._waitHandleCount += 1
 
         if(self.frame_source_types & FrameSourceTypes_BodyIndex):
-            self._body_index_frame_data = ctypes.POINTER(ctypes.c_ubyte) 
+            self._body_index_frame_data = ctypes.POINTER(ctypes.c_ubyte)
             self._body_index_frame_data_capacity = ctypes.c_uint(self.body_index_frame_desc.Width * self.body_index_frame_desc.Height)
             self._body_index_frame_data_type = ctypes.c_ubyte * self._body_index_frame_data_capacity.value
             self._body_index_frame_data = ctypes.cast(self._body_index_frame_data_type(), ctypes.POINTER(ctypes.c_ubyte))
@@ -142,7 +142,7 @@ class PyKinectRuntime(object):
             self._handles[self._waitHandleCount] = self._body_index_frame_arrived_event
             self._waitHandleCount += 1
 
-        self._body_frame_data = None 
+        self._body_frame_data = None
         if(self.frame_source_types & FrameSourceTypes_Body):
             self._body_frame_data_capacity = ctypes.c_uint(self.max_body_count)
             self._body_frame_data_type = ctypes.POINTER(IBody) * self._body_frame_data_capacity.value
@@ -163,7 +163,7 @@ class PyKinectRuntime(object):
         self._last_long_exposure_infrared_frame = None
         self._last_audio_frame = None
 
-        start_clock = time.clock()
+        start_clock = time.perf_counter()
         self._last_color_frame_access = self._last_color_frame_time = start_clock
         self._last_body_frame_access = self._last_body_frame_time = start_clock
         self._last_body_index_frame_access = self._last_body_index_frame_time = start_clock
@@ -243,7 +243,7 @@ class PyKinectRuntime(object):
         with self._color_frame_lock:
             if self._color_frame_data is not None:
                 data = numpy.copy(numpy.ctypeslib.as_array(self._color_frame_data, shape=(self._color_frame_data_capacity.value,)))
-                self._last_color_frame_access = time.clock()
+                self._last_color_frame_access = time.perf_counter()
                 return data
             else:
                 return None
@@ -252,7 +252,7 @@ class PyKinectRuntime(object):
         with self._infrared_frame_lock:
             if self._infrared_frame_data is not None:
                 data = numpy.copy(numpy.ctypeslib.as_array(self._infrared_frame_data, shape=(self._infrared_frame_data_capacity.value,)))
-                self._last_infrared_frame_access = time.clock()
+                self._last_infrared_frame_access = time.perf_counter()
                 return data
             else:
                 return None
@@ -270,7 +270,7 @@ class PyKinectRuntime(object):
         with self._body_index_frame_lock:
             if self._body_index_frame_data is not None:
                 data = numpy.copy(numpy.ctypeslib.as_array(self._body_index_frame_data, shape=(self._body_index_frame_data_capacity.value,)))
-                self._last_body_index_frame_access = time.clock()
+                self._last_body_index_frame_access = time.perf_counter()
                 return data
             else:
                 return None
@@ -278,17 +278,17 @@ class PyKinectRuntime(object):
     def get_last_body_frame(self):
         with self._body_frame_lock:
             if self._body_frame_bodies is not None:
-                self._last_body_frame_access = time.clock()
+                self._last_body_frame_access = time.perf_counter()
                 return self._body_frame_bodies.copy()
             else:
                 return None
 
 
-    def body_joint_to_color_space(self, joint): 
-        return self._mapper.MapCameraPointToColorSpace(joint.Position) 
+    def body_joint_to_color_space(self, joint):
+        return self._mapper.MapCameraPointToColorSpace(joint.Position)
 
-    def body_joint_to_depth_space(self, joint): 
-        return self._mapper.MapCameraPointToDepthSpace(joint.Position) 
+    def body_joint_to_depth_space(self, joint):
+        return self._mapper.MapCameraPointToDepthSpace(joint.Position)
 
 
     def body_joints_to_color_space(self, joints):
@@ -308,30 +308,30 @@ class PyKinectRuntime(object):
         return joint_points
 
     def kinect_frame_thread(self):
-        while 1:    
+        while 1:
                 wait = ctypes.windll.kernel32.WaitForMultipleObjects(self._waitHandleCount, self._handles, False, PyKinectV2._INFINITE)
-               
-                if wait == 0: 
+
+                if wait == 0:
                     break
-                
-                if self._handles[wait] == self._color_frame_arrived_event: 
+
+                if self._handles[wait] == self._color_frame_arrived_event:
                     self.handle_color_arrived(wait)
-                elif self._handles[wait] == self._depth_frame_arrived_event: 
+                elif self._handles[wait] == self._depth_frame_arrived_event:
                     self.handle_depth_arrived(wait)
-                elif self._handles[wait] == self._body_frame_arrived_event: 
+                elif self._handles[wait] == self._body_frame_arrived_event:
                     self.handle_body_arrived(wait)
-                elif self._handles[wait] == self._body_index_frame_arrived_event: 
+                elif self._handles[wait] == self._body_index_frame_arrived_event:
                     self.handle_body_index_arrived(wait)
-                elif self._handles[wait] == self._infrared_frame_arrived_event: 
+                elif self._handles[wait] == self._infrared_frame_arrived_event:
                     self.handle_infrared_arrived(wait)
-                elif self._handles[wait] == self._long_exposure_infrared_frame_arrived_event: 
+                elif self._handles[wait] == self._long_exposure_infrared_frame_arrived_event:
                     self.handle_long_exposure_infrared_arrived(wait)
-                elif self._handles[wait] == self._audio_frame_arrived_event: 
+                elif self._handles[wait] == self._audio_frame_arrived_event:
                     self.handle_audio_arrived(wait)
                 else:
                     break
 
-    
+
     def handle_color_arrived(self, handle_index):
         colorFrameEventData = self._color_frame_reader.GetFrameArrivedEventData(self._handles[handle_index])
         colorFrameRef = colorFrameEventData.FrameReference
@@ -340,8 +340,8 @@ class PyKinectRuntime(object):
             try:
                 with self._color_frame_lock:
                     colorFrame.CopyConvertedFrameDataToArray(self._color_frame_data_capacity, self._color_frame_data, PyKinectV2.ColorImageFormat_Bgra)
-                    self._last_color_frame_time = time.clock()
-            except: 
+                    self._last_color_frame_time = time.perf_counter()
+            except:
                 pass
             colorFrame = None
         except:
@@ -358,7 +358,7 @@ class PyKinectRuntime(object):
             try:
                 with self._depth_frame_lock:
                     depthFrame.CopyFrameDataToArray(self._depth_frame_data_capacity, self._depth_frame_data)
-                    self._last_depth_frame_time = time.clock()
+                    self._last_depth_frame_time = time.perf_counter()
             except:
                 pass
             depthFrame = None
@@ -367,26 +367,26 @@ class PyKinectRuntime(object):
         depthFrameRef = None
         depthFrameEventData = None
 
-  
+
     def handle_body_arrived(self, handle_index):
         bodyFrameEventData = self._body_frame_reader.GetFrameArrivedEventData(self._handles[handle_index])
         bofyFrameRef = bodyFrameEventData.FrameReference
         try:
             bodyFrame = bofyFrameRef.AcquireFrame()
 
-            try: 
+            try:
                 with self._body_frame_lock:
                     bodyFrame.GetAndRefreshBodyData(self._body_frame_data_capacity, self._body_frame_data)
                     self._body_frame_bodies = KinectBodyFrameData(bodyFrame, self._body_frame_data, self.max_body_count)
-                    self._last_body_frame_time = time.clock()
+                    self._last_body_frame_time = time.perf_counter()
 
-                # need these 2 lines as a workaround for handling IBody referencing exception 
+                # need these 2 lines as a workaround for handling IBody referencing exception
                 self._body_frame_data = None
                 self._body_frame_data = ctypes.cast(self._body_frame_data_type(), ctypes.POINTER(ctypes.POINTER(IBody)))
 
             except:
                 pass
-                            
+
             bodyFrame = None
         except:
             pass
@@ -402,8 +402,8 @@ class PyKinectRuntime(object):
             try:
                 with self._body_index_frame_lock:
                     bodyIndexFrame.CopyFrameDataToArray(self._body_index_frame_data_capacity, self._body_index_frame_data)
-                    self._last_body_index_frame_time = time.clock()
-            except: 
+                    self._last_body_index_frame_time = time.perf_counter()
+            except:
                 pass
             bodyIndexFrame = None
         except:
@@ -419,7 +419,7 @@ class PyKinectRuntime(object):
             try:
                 with self._infrared_frame_lock:
                     infraredFrame.CopyFrameDataToArray(self._infrared_frame_data_capacity, self._infrared_frame_data)
-                    self._last_infrared_frame_time = time.clock()
+                    self._last_infrared_frame_time = time.perf_counter()
             except:
                 pass
             infraredFrame = None
@@ -429,21 +429,21 @@ class PyKinectRuntime(object):
         infraredFrameEventData = None
 
     def handle_long_exposure_infrared_arrived(self, handle_index):
-        pass 
+        pass
 
     def handle_audio_arrived(self, handle_index):
-        pass 
+        pass
 
 
 
-class KinectBody(object): 
+class KinectBody(object):
     def __init__(self, body = None):
         self.is_restricted = False
         self.tracking_id = -1
 
-        self.is_tracked = False 
-        
-        if body is not None: 
+        self.is_tracked = False
+
+        if body is not None:
             self.is_tracked = body.IsTracked
 
         if self.is_tracked:
@@ -469,10 +469,10 @@ class KinectBody(object):
             joint_orientations_data_type = PyKinectV2._JointOrientation * joints_capacity.value
             joint_orientations = ctypes.cast(joint_orientations_data_type(), ctypes.POINTER(PyKinectV2._JointOrientation))
             body.GetJointOrientations(PyKinectV2.JointType_Count, joint_orientations)
-            self.joint_orientations = joint_orientations 
+            self.joint_orientations = joint_orientations
 
 
-class KinectBodyFrameData(object): 
+class KinectBodyFrameData(object):
     def __init__(self, bodyFrame, body_frame_data, max_body_count):
         self.bodies = None
         self.floor_clip_plane = None
@@ -489,6 +489,4 @@ class KinectBodyFrameData(object):
         res.floor_clip_plane = self.floor_clip_plane
         res.relative_time = self.relative_time
         res.bodies = numpy.copy(self.bodies)
-        return res 
-       
-      
+        return res
